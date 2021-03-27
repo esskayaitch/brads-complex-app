@@ -1,17 +1,17 @@
 const postsCollection = require('../db').db().collection("posts")
 const ObjectID = require('mongodb').ObjectID
 const User = require('./User')
-const sanitizeHTML = require('sanitize-html') 
+const sanitizeHTML = require('sanitize-html')
 
 //
 // Post constructor finction ----------------------------------------------------------------------
 //
 let Post = function (data, userid, requestedPostId) {
 
-  this.data            = data               // req.body data comes in through first parameter
-  this.userid          = userid             // userid comes from second parameter
+  this.data = data               // req.body data comes in through first parameter
+  this.userid = userid             // userid comes from second parameter
   this.requestedPostId = requestedPostId    // post ID requested by update
-  this.errors          = []
+  this.errors = []
 
 }
 
@@ -37,7 +37,7 @@ Post.prototype.CleanUp = function () {
 Post.prototype.validate = function () {
 
   if (this.data.title == "") { this.errors.push("You must provide a title.") }
-  if (this.data.body  == "") { this.errors.push("You must provide post content.") }
+  if (this.data.body == "") { this.errors.push("You must provide post content.") }
 
 }
 
@@ -151,9 +151,11 @@ Post.findSingleById = function (id, visitorId) {
     ], visitorId)                                           // send visitor ID so we can check ownership/authority
 
     if (posts.length) {                                     // if lenght != 0, ie: something was returned
+
       console.log(posts[0]) // debug - send out the post id
+
       resolve(posts[0])                                     // return the object 
-    } else { 
+    } else {
       reject()                                              // otherwise fail 
     }
   })
@@ -173,7 +175,7 @@ Post.findByAuthorId = function (authorId) {
 }
 
 //
-// shared function to retrieve a post by either user ID -> post ID
+// shared function to retrieve a post by either user ID -> post ID --------------------------------
 //   or by author depending on params ---------
 //
 Post.reusablePostQuery = function (uniqueOperations, visitorId) {
@@ -181,7 +183,7 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
   return new Promise(async function (resolve, reject) {
 
     let aggOperations = uniqueOperations.concat([           // Aggregation operations group values from multiple documents together
-      {      
+      {
         $lookup: {                                          // Performs a left outer join to an unsharded collection in the same database
           from: "users",                                    // the collection in the same database to perform the join with
           localField: "author",                             // the field from the documents input to the $lookup stage
@@ -213,12 +215,42 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
       }
       return post
     })
-console.log("posts retrieved in array = " + posts)
 
     resolve(posts)
   })
 }
 
+//
+// delete a post ----------------------------------------------------------------------------------
+//
+Post.delete = function (postIdToDelete, currentUserId) {
+
+  console.log("postIdToDelete=" + postIdToDelete + ". currentUserId=" + currentUserId + ".")
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      let post = await Post.findSingleById(postIdToDelete, currentUserId)
+
+      if (post.isVisitorOwner) {
+        console.log("about to delete")
+        await postsCollection.deleteOne({ _id: new ObjectID(postIdToDelete) }) // get MongoDB to delete the document
+        console.log("after deleteOne")
+        resolve()
+      } else {
+
+        console.log("not owner so cannot delete")
+
+        reject() // request from user without authority
+      }
+    }
+    catch {
+
+      console.log("not found so cannot delete")
+
+      reject() // post ID not valid or the post doesn't exist
+    }
+  })
+}
 
 
 module.exports = Post

@@ -50,11 +50,11 @@ exports.viewSingle = async function (req, res) {
 //
 
 // his new code from lesson 86
-exports.viewEditScreen = async function(req, res) {
+exports.viewEditScreen = async function (req, res) {
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId)
     if (post.isVisitorOwner) {
-      res.render("edit-post", {post: post})
+      res.render("edit-post", { post: post })
     } else {
       req.flash("errors", "You do not have permission to perform that action.")
       req.session.save(() => res.redirect("/"))
@@ -116,6 +116,26 @@ exports.edit = function (req, res) {
       req.session.save(function () {
         res.redirect("/")
       })
+    })
+}
+
+
+//
+// POST request to /post/:id/delete ----------------------------------------------------------------
+//
+exports.delete = function (req, res) {
+  Post.delete(req.params.id, req.visitorId)
+    .then(() => {
+
+      req.flash("success", "Post successfully deleted.")
+      req.session.save(() => res.redirect(`/profile/${req.session.user.username}`))
+
+    })
+    .catch(() => {
+
+      req.flash("errors", "You do not have permission to perform that action.")
+      req.session.save(() => res.redirect("/"))
+
     })
 }
 
