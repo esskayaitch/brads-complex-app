@@ -1,0 +1,12 @@
+<% errors.forEach(function(message) { %>
+  <div class="alert alert-danger text-center">
+    <%= message %>
+  </div> <!-- Echo out the message contents from the session var -->
+  <% }) %>
+
+<% success.forEach(function(message) { %>
+  <div class="alert alert-success text-center">
+    <%= message %>
+  </div> <!-- Echo out the message contents from the session var -->
+  <% }) %>
+

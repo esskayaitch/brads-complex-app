@@ -2,16 +2,18 @@ const bcrypt = require("bcryptjs")
 const usersCollection = require('../db').db().collection('users') // pickup the users collection handle
 const validator = require('validator')
 const md5 = require("md5")
-
-// define the User constructor
-
-let User = function (data) {
-  this.data = data
-  this.errors = []
+//
+// define the User constructor --------------------------------------------------------------------
+//
+let User = function (data, getAvatar) {
+  this.data = data                                    // data comes in as first param
+  this.errors = []        
+  if (getAvatar == undefined) { getAvatar = false }   // second param is empty or is avatar url
+  if (getAvatar) { this.getAvatar() }
 }
-
-// local function to cleanup input data -------------------------------------------------------------------------
-
+//
+// local function to cleanup input data -----------------------------------------------------------
+//
 User.prototype.cleanUp = function () {
   if (typeof (this.data.username) != "string") { this.data.username = "" }
   if (typeof (this.data.email) != "string") { this.data.email = "" }
@@ -25,9 +27,9 @@ User.prototype.cleanUp = function () {
     password: this.data.password
   }
 }
-
-// local function to validate the user input details -------------------------------------------------------------
-
+//
+// local function to validate the user input details ----------------------------------------------
+//
 User.prototype.validate = function () {
 
   return new Promise(async (resolve, reject) => {
@@ -58,9 +60,9 @@ User.prototype.validate = function () {
 
 }
 
-
-// come here to let the user login -----------------------------------------------------------------
-
+//
+// come here to let the user login ----------------------------------------------------------------
+//
 User.prototype.login = function () {
 
   return new Promise((resolve, reject) => {  // Promise needs to have => for this.username/password to work
@@ -71,26 +73,28 @@ User.prototype.login = function () {
     // but arrow function does not alter- 'this' so it will still be the current User object.
 
     usersCollection.findOne({ username: this.data.username })
-      .then((attemptedUser) => {
-        if (attemptedUser && (bcrypt.compareSync(this.data.password, attemptedUser.password))) {
-          this.data = attemptedUser
-          this.getAvatar()
-          resolve("User verified.")              // document retrieved, and bcrypt good
-        } else {
-          reject("Invalid username / password.") // either document not retrieved, or bcrypt faied
+      .then(
+        (attemptedUser) => {
+          if (attemptedUser && (bcrypt.compareSync(this.data.password, attemptedUser.password))) {
+            this.data = attemptedUser
+            this.getAvatar()
+            resolve("User verified.")              // document retrieved, and bcrypt good
+          } else {
+            reject("Invalid username / password.") // either user not found, or bcrypt faied
+          }
         }
-      }
       )
-      .catch(function () {
-        reject("Database has not responded.")    // database request failed
-      }
+      .catch(
+        function () {
+          reject("Database has not responded.")    // database request failed
+        }
       )
   })
 }
 
-
-// come here to register the user ----------------------------------------------------------
-
+//
+// come here to register the user -----------------------------------------------------------------
+//
 User.prototype.register = function () {
 
   return new Promise(async (resolve, reject) => {
@@ -111,10 +115,49 @@ User.prototype.register = function () {
 
 }
 
-
+//
+// generate the url for the users avatar ----------------------------------------------------------
+//
 User.prototype.getAvatar = function () {
   this.avatar = `https://gravatar.com/avatar/${md5(this.data.email)}?s=128`
 }
+
+
+
+
+//
+// look up the user -------------------------------------------------------------------------------
+//
+User.findByUsername = function (username) {
+  return new Promise(function (resolve, reject) {
+    if (typeof (username) != "string") {
+      reject()
+      return
+    }
+    usersCollection.findOne({ username: username })
+      .then(function (userDoc) {
+
+        if(userDoc) {
+
+          userDoc = new User(userDoc, true)
+          userDoc = {
+            _id: userDoc.data._id,
+            username: userDoc.data.username,
+            avatar: userDoc.avatar
+          }
+          resolve(userDoc)
+        }else {
+          reject()
+        }
+
+
+      })
+      .catch(function () {
+        reject()
+      })
+  })
+}
+
 
 
 module.exports = User
