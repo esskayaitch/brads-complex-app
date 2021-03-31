@@ -4,6 +4,7 @@ const router = express.Router()
 
 const userController = require('./controllers/userController')
 const postController = require('./controllers/postController')
+const followController = require('./controllers/followController')
 
 // user routes 
 
@@ -28,7 +29,7 @@ router.get('/profile/:username', userController.ifUserExists, userController.pro
 
 
 // follow routes
-
+router.post("/addFollow/:username", userController.mustBeLoggedIn, followController.addFollow)
 
 
 
