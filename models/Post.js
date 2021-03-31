@@ -178,7 +178,7 @@ Post.findByAuthorId = function (authorId) {
 // shared function to retrieve a post by either user ID -> post ID --------------------------------
 //   or by author depending on params ---------
 //
-Post.reusablePostQuery = function (uniqueOperations, visitorId) {
+Post.reusablePostQuery = function (uniqueOperations, visitorId, finalOperations = []) {
 
   return new Promise(async function (resolve, reject) {
 
@@ -200,7 +200,7 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
           author: { $arrayElemAt: ["$authorDocument", 0] }  // Set author to the first element (0) of the authorDoument array
         }
       }
-    ])
+    ]).concat(finalOperations)
 
     // The following code works because we know that each post only has a single author, 
     // and therefore the $lookup (join) will only return a single document in the authorDocument[] array.
@@ -209,7 +209,8 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
     // clean up author property in each post object
     posts = posts.map(function (post) {                      // rebuild the posts with the following elements
       post.isVisitorOwner = post.authorId.equals(visitorId)  // Set flag to say the visitor owns the post, or not
-      post.author = {                                        // post.uathor should only have
+      post.authorId = undefined                              // empty author ID field so it's not exposed in the browser
+      post.author = {                                        // post.author should only have
         username: post.author.username,                      // the username from the autthorDicument
         avatar: new User(post.author, true).avatar           // the avatar link (by using the getAvatar() from the User model)
       }
@@ -252,5 +253,29 @@ Post.delete = function (postIdToDelete, currentUserId) {
   })
 }
 
+//
+// search all posts -------------------------------------------------------------------------------
+//
+Post.search = function (searchTerm) {
+
+  return new Promise(async (resolve, reject) => {
+
+    if (typeof (searchTerm) == "string") {
+      let posts = await Post.reusablePostQuery(
+        [{ $match: { $text: { $search: searchTerm } } }],  // param1 $txt array
+        undefined,                                         // param2 undefined, we don't need the visitorId here
+        [{ $sort: { score: { $meta: "textScore" } } }]     // param3 $sort array
+      )
+      resolve(posts)
+    } else {
+      reject()                                             // bad search,  not string
+    }
+  })
+}
+
 
 module.exports = Post
+
+//
+// ENDS Post.js
+//
