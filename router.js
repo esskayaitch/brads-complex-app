@@ -24,12 +24,13 @@ router.post('/post/:id/delete', userController.mustBeLoggedIn, postController.de
 router.post('/search', postController.search)
 
 // profile related routes
-router.get('/profile/:username', userController.ifUserExists, userController.profilePostsScreen)
+router.get('/profile/:username', userController.ifUserExists, userController.sharedProfileData, userController.profilePostsScreen)
 
 
 
 // follow routes
 router.post("/addFollow/:username", userController.mustBeLoggedIn, followController.addFollow)
+router.post("/removeFollow/:username", userController.mustBeLoggedIn, followController.removeFollow)
 
 
 
