@@ -1,6 +1,7 @@
 const usersCollection = require("../db").db().collection("users")
 const followsCollection = require("../db").db().collection("follows")
 const ObjectID = require('mongodb').ObjectID
+const User = require('./User')
 
 //
 // Constructor ------------------------------------------------------------------------------------
@@ -9,13 +10,16 @@ let Follow = function (followedUsername, authorId) {
   this.followedUsername = followedUsername
   this.authorId = authorId
   this.errors = []
-}
+} // ENDS constructor
+//
+
 //
 // check that the username is just a string -------------------------------------------------------
 //
 Follow.prototype.cleanUp = function () {
   if (typeof (this.followedUsername) != "string") { this.followedUsername = "" }
-}
+} // ENDS cleanUp()
+//
 
 //
 // check that the user being followed exists in the DB --------------------------------------------
@@ -35,8 +39,7 @@ Follow.prototype.validate = async function (action) {
     followedId: this.followedId, authorId: new ObjectID(this.authorId)
   })
 
-
-  console.log("Action=" + action)                         // debug
+  console.log("Action=" + action)                                              // debug
 
   // already following - cannot happen!!! The "follow" button should not have appeared on the screen.
   if (action == "create") {
@@ -52,9 +55,8 @@ Follow.prototype.validate = async function (action) {
   if (this.followedId.equals(this.authorId)) {
     { this.errors.push("You cannot follow yourself.") }
   }
-
-
-}
+} // ENDS validate()
+//
 
 //
 // Add this visitor as a follower of this user ----------------------------------------------------
@@ -71,7 +73,8 @@ Follow.prototype.create = function () {
       reject(this.errors)
     }
   })
-}
+} // ENDS create()
+//
 
 //
 // Add this visitor as a follower of this user ----------------------------------------------------
@@ -88,8 +91,8 @@ Follow.prototype.delete = function () {
       reject(this.errors)
     }
   })
-}
-
+} // ENDS delete()
+//
 
 //
 // Check to see if the current visitor is following this user -------------------------------------
@@ -105,17 +108,99 @@ Follow.isVisitorFollowing = async function (followedId, visitorId) {
       authorId: new ObjectID(visitorId)
     }
   )
-
-  console.log("followDoc=" + followDoc)
-
   if (followDoc) {
     return true
   } else {
     return false
   }
-}
+} // ENDS isVisitorFollowing()
+//
 
+//
+// Get the users who are following this user ------------------------------------------------------
+//
+Follow.getFollowersById = function (id) {
+  // console.log("in getFollowersById, followed ID =" + id)                     // debug
+  return new Promise(async (resolve, reject) => {
+    try {
+      let followers = await followsCollection.aggregate([
+        { $match: { followedId: id } },
+        { $lookup: { from: "users", localField: "authorId", foreignField: "_id", as: "userDoc" } },
+        {
+          $project: {
+            username: { $arrayElemAt: ["$userDoc.username", 0] },
+            email: { $arrayElemAt: ["$userDoc.email", 0] }
+          }
+        }
+      ]).toArray()
+      followers = followers.map(function (follower) {
+        let user = new User(follower, true)
+        return { username: follower.username, avatar: user.avatar }
+      })
+      resolve(followers)
+    }
+    catch {
+      reject()
+    }
+  })
+} // ENDS getFollowersById()
+//
 
+//
+// Get the users who are following this user ------------------------------------------------------
+//
+Follow.getFollowingById = function (id) {
+
+  console.log("+++ in getFollowingById, id=" + id)                             // debug
+
+  return new Promise(async (resolve, reject) => {
+    try {
+      let followers = await followsCollection.aggregate([
+        { $match: { authorId: id } },
+        { $lookup: { from: "users", localField: "followedId", foreignField: "_id", as: "userDoc" } },
+        {
+          $project: {
+            username: { $arrayElemAt: ["$userDoc.username", 0] },
+            email: { $arrayElemAt: ["$userDoc.email", 0] }
+          }
+        }
+      ]).toArray()
+
+      console.log("-=-= following=" + followers)                                    // debug
+      // console.log("-+-+ userDoc=" + userDoc)                                        // debug
+
+      followers = followers.map(function (follower) {
+        let user = new User(follower, true)
+        return { username: follower.username, avatar: user.avatar }
+      })
+      resolve(followers)
+    }
+    catch {
+      reject()
+    }
+  })
+} // ENDS getFollowersById()
+//
+
+//
+// Get the number of followers of this author -----------------------------------------------------
+//
+Follow.countFollowersById = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let followerCount = await followsCollection.countDocuments({followedId: id})
+    resolve(followerCount)
+  })
+} // ENDS Post.countPostsByAuthor()
+
+//
+// Get the number of users this author is following -----------------------------------------------
+//
+Follow.countFollowingById = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let followingCount = await followsCollection.countDocuments({authorId: id})
+    resolve(followingCount)
+  })
+} // ENDS Post.countPostsByAuthor()
 
 
 module.exports = Follow

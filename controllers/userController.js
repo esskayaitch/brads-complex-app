@@ -27,9 +27,21 @@ exports.sharedProfileData = async function (req, res, next) {
   req.isVisitorsProfile = isVisitorsProfile
   req.isFollowing = isFollowing
 
-  next() // move on to the next function called in from router.js 
+  // retrieve post, follower and follwing counts - run simitaneously
 
-}
+  let postCountPromise = Post.countPostsByAuthor(req.profileUser._id)
+  let followerCountPromise = Follow.countFollowersById(req.profileUser._id)
+  let followingCountPromise = Follow.countFollowingById(req.profileUser._id)
+
+  let [postCount, followerCount, followingCount] = await Promise.all([postCountPromise, followerCountPromise, followingCountPromise])
+
+  req.postCount = postCount
+  req.followerCount = followerCount
+  req.followingCount = followingCount
+
+  next() // move on to the next function called by router.js 
+
+} // ENDS User.sharedProfileData()
 
 
 //
@@ -45,7 +57,7 @@ exports.mustBeLoggedIn = function (req, res, next) {
     })
   }
 
-}
+} // ENDS mustBeLoggedIn()
 
 //
 // login the user if details verified -------------------------------------------------------------
@@ -69,7 +81,7 @@ exports.login = function (req, res) {
       })
     }
     )
-}
+} // ENDS user.login()
 
 //
 // logout the user --------------------------------------------------------------------------------
@@ -79,7 +91,7 @@ exports.logout = function (req, res) {
     res.redirect('/')                       // when session destroy completes
   })
 
-}
+} // ENDS user.logout()
 
 //
 // register the user in the db --------------------------------------------------------------------
@@ -103,7 +115,7 @@ exports.register = function (req, res) {
         res.redirect('/')                   // ... redirect only when session save() has finished (async)
       })
     })
-}
+} // ENDS User.register()
 
 //
 // render home page -------------------------------------------------------------------------------
@@ -121,21 +133,15 @@ exports.home = function (req, res) {
 // confirm that there are posts under this name ---------------------------------------------------
 //
 exports.ifUserExists = function (req, res, next) {
-
   User.findByUsername(req.params.username)
     .then(function (userDocument) {
-
       req.profileUser = userDocument
       next()
-
     })
     .catch(function () {
-
       res.render("404")                     // there are no documents with that author name
-
     })
-
-}
+} // ENDS ifUserExists()
 
 //
 // Display the posts by this user -----------------------------------------------------------------
@@ -143,15 +149,19 @@ exports.ifUserExists = function (req, res, next) {
 exports.profilePostsScreen = function (req, res) {
 
   Post.findByAuthorId(req.profileUser._id)
-
     .then(function (posts) {
-
       res.render('profile', {
+        currentPage: "posts",
         posts: posts,
         profileUsername: req.profileUser.username,
         profileAvatar: req.profileUser.avatar,
         isFollowing: req.isFollowing,
-        isVisitorsProfile: req.isVisitorsProfile
+        isVisitorsProfile: req.isVisitorsProfile,
+        counts: {
+          postCount: req.postCount,
+          followerCount: req.followerCount,
+          followingCount: req.followingCount
+        }
       })
     })
     .catch(function () {
@@ -159,7 +169,74 @@ exports.profilePostsScreen = function (req, res) {
       res.render("404")
 
     })
+} // ENDS
 
-}
+//
+// Get the users that are followers of this user --------------------------------------------------
+//
+exports.profileFollowersScreen = async function (req, res) {
+  console.log("IN profileFollowersScreen ")
+  try {
+    // console.log("in try block")                            // debug
+    let followers = await Follow.getFollowersById(req.profileUser._id)
+    // console.log("followers=" + followers)                  // debug
+    res.render('profile-followers', {
+      currentPage: "followers",
+      followers: followers,
+      profileUsername: req.profileUser.username,
+      profileAvatar: req.profileUser.avatar,
+      isFollowing: req.isFollowing,
+      isVisitorsProfile: req.isVisitorsProfile,
+      counts: {
+        postCount: req.postCount,
+        followerCount: req.followerCount,
+        followingCount: req.followingCount
+      }
+    })
+  }
+  catch {
+    // console.log("in catch block")                                       // debug
+    res.render('404')
+  }
+} // profileFollowersScreen()
+
+//
+// Get the users that are followers of this user --------------------------------------------------
+//
+exports.profileFollowingScreen = async function (req, res) {
+
+  console.log(" === IN profileFollowingScreen, req.profileUser._id=" + req.profileUser._id) // debug
+
+  try {
+    // console.log("in try block")                                             // debug
+
+    let following = await Follow.getFollowingById(req.profileUser._id)
+
+    console.log("--- following=" + following)                                  // debug
+
+    res.render('profile-following', {
+      currentPage: "following",
+      following: following,
+      profileUsername: req.profileUser.username,
+      profileAvatar: req.profileUser.avatar,
+      isFollowing: req.isFollowing,
+      isVisitorsProfile: req.isVisitorsProfile,
+      counts: {
+        postCount: req.postCount,
+        followerCount: req.followerCount,
+        followingCount: req.followingCount
+      }
+    })
+  }
+  catch {
+    // console.log("in catch block")                                       // debug
+    res.render('404')
+  }
+} // profileFollowingScreen()
+
+
+
+
+
 
 // ENDS userController.js

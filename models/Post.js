@@ -13,11 +13,11 @@ let Post = function (data, userid, requestedPostId) {
   this.requestedPostId = requestedPostId    // post ID requested by update
   this.errors = []
 
-}
-
+} // ENDS Post constructor
+//
 // clean up user data -----------------------------------------------------------------------------
-
-Post.prototype.CleanUp = function () {
+//
+Post.prototype.cleanUp = function () {
 
   if (typeof (this.data.title) != "string") { this.data.title = "" }
   if (typeof (this.data.body) != "string") { this.data.body = "" }
@@ -29,25 +29,24 @@ Post.prototype.CleanUp = function () {
     createdDate: new Date(),
     author: ObjectID(this.userid)
   }
-
-}
-
+} // ENDS Post.cleanup()
+//
 // validate user data -----------------------------------------------------------------------------
-
+//
 Post.prototype.validate = function () {
 
   if (this.data.title == "") { this.errors.push("You must provide a title.") }
   if (this.data.body == "") { this.errors.push("You must provide post content.") }
 
-}
+} // ENDS Post.validate()
 
-
+//
 // create user post -------------------------------------------------------------------------------
-
+//
 Post.prototype.create = function () {
 
   return new Promise((resolve, reject) => {
-    this.CleanUp()
+    this.cleanUp()
     this.validate()
 
     if (!this.errors.length) { // if not zero then there are errors
@@ -66,23 +65,19 @@ Post.prototype.create = function () {
       reject(this.errors) // return errors
     }
   })
-}
+} // ENDS Post.create
 
 //
-// Check that we should pdate the user's Post -------------------------------------------------------------------------
+// Check that we should update the user's Post ----------------------------------------------------
 //
 Post.prototype.update = function () {
-
   return new Promise(async (resolve, reject) => {
     try {
-
-
-      console.log("at 1 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
-
+      // console.log("at 1 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
 
       let post = await Post.findSingleById(this.requestedPostId, this.userid)
 
-      console.log("at 2 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
+      // console.log("at 2 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
 
       if (post.isVisitorOwner) {
         // actually update the DB
@@ -95,14 +90,14 @@ Post.prototype.update = function () {
       reject() // fail
     }
   })
-}
+} // ENDS Post.update()2
 
 //
-// Having checked that we have good data and authority we can go ahead and update the database
+// Having checked that we have good data and authority we can go ahead and update the database ----
 //
 Post.prototype.actuallyUpdate = function () {
   return new Promise(async (resolve, reject) => {
-    this.CleanUp()
+    this.cleanUp()
     this.validate()
     if (!this.errors.length) {
       await postsCollection.findOneAndUpdate(
@@ -121,7 +116,7 @@ Post.prototype.actuallyUpdate = function () {
       resolve("failure")
     }
   })
-}
+} // ENDS Post.actuallyUpdate()
 
 //
 // retrieve a single user post --------------------------------------------------------------------
@@ -159,7 +154,7 @@ Post.findSingleById = function (id, visitorId) {
       reject()                                              // otherwise fail 
     }
   })
-}
+} // ENDS Post.findSingleById()
 
 //
 // Retrieve posts for a known author --------------------------------------------------------------
@@ -172,7 +167,7 @@ Post.findByAuthorId = function (authorId) {
     { $sort: { createdDate: -1 } }
 
   ])
-}
+} // ENDS Post.findByAuthorId()
 
 //
 // shared function to retrieve a post by either user ID -> post ID --------------------------------
@@ -197,7 +192,7 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId, finalOperations 
           body: 1,                                          // Specifies the inclusion of body
           createdDate: 1,                                   // Specifies the inclusion of a createdDate
           authorId: "$author",                              // Save the author id (MongoDB syntax) before we change it
-          author: { $arrayElemAt: ["$authorDocument", 0] }  // Set author to the first element (0) of the authorDoument array
+          author: { $arrayElemAt: ["$authorDocument", 0] }  // Set author to the first element (0) of the $authorDoument array
         }
       }
     ]).concat(finalOperations)
@@ -219,7 +214,7 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId, finalOperations 
 
     resolve(posts)
   })
-}
+} // ENDS Post.reusablePostQuery()
 
 //
 // delete a post ----------------------------------------------------------------------------------
@@ -251,7 +246,7 @@ Post.delete = function (postIdToDelete, currentUserId) {
       reject() // post ID not valid or the post doesn't exist
     }
   })
-}
+} // ENDS Post.delete()
 
 //
 // search all posts -------------------------------------------------------------------------------
@@ -271,7 +266,23 @@ Post.search = function (searchTerm) {
       reject()                                             // bad search,  not string
     }
   })
-}
+} // ENDS Post.search()
+
+//
+// Get the number of documents by this author -----------------------------------------------------
+//
+Post.countPostsByAuthor = function(id) {
+  return new Promise(async (resolve, reject) => {
+    let postCount = await postsCollection.countDocuments({author: id})
+    resolve(postCount)
+  })
+} // ENDS Post.countPostsByAuthor()
+
+
+
+
+
+
 
 
 module.exports = Post
