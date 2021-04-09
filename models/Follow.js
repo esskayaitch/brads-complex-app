@@ -34,7 +34,6 @@ Follow.prototype.validate = async function (action) {
   } else {
     this.errors.push("You cannot follow a user who does not exist!")
   }
-
   let doesFollowAlreadyExist = await followsCollection.findOne({
     followedId: this.followedId, authorId: new ObjectID(this.authorId)
   })
@@ -45,12 +44,10 @@ Follow.prototype.validate = async function (action) {
   if (action == "create") {
     if (doesFollowAlreadyExist) { this.errors.push("You are already following this user.") }
   }
-
   //  cannot delete if you are not following already
   if (action == "delete") {
     if (!doesFollowAlreadyExist) { this.errors.push("You are not following this user.") }
   }
-
   // should not folow yourself
   if (this.followedId.equals(this.authorId)) {
     { this.errors.push("You cannot follow yourself.") }
@@ -62,7 +59,6 @@ Follow.prototype.validate = async function (action) {
 // Add this visitor as a follower of this user ----------------------------------------------------
 //
 Follow.prototype.create = function () {
-
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
     await this.validate("create") // "create tells the validate function what action called it ---- 
@@ -80,7 +76,6 @@ Follow.prototype.create = function () {
 // Add this visitor as a follower of this user ----------------------------------------------------
 //
 Follow.prototype.delete = function () {
-
   return new Promise(async (resolve, reject) => {
     this.cleanUp()
     await this.validate("delete")  // "delete" tells the validate function what action called it --

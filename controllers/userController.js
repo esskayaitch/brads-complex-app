@@ -27,7 +27,7 @@ exports.sharedProfileData = async function (req, res, next) {
   req.isVisitorsProfile = isVisitorsProfile
   req.isFollowing = isFollowing
 
-  // retrieve post, follower and follwing counts - run simitaneously
+  // retrieve post, follower and following counts - run simultaneously
 
   let postCountPromise = Post.countPostsByAuthor(req.profileUser._id)
   let followerCountPromise = Follow.countFollowersById(req.profileUser._id)
@@ -42,7 +42,7 @@ exports.sharedProfileData = async function (req, res, next) {
   next() // move on to the next function called by router.js 
 
 } // ENDS User.sharedProfileData()
-
+//
 
 //
 // check the user is logged in --------------------------------------------------------------------
@@ -56,8 +56,8 @@ exports.mustBeLoggedIn = function (req, res, next) {
       res.redirect('/')
     })
   }
-
 } // ENDS mustBeLoggedIn()
+//
 
 //
 // login the user if details verified -------------------------------------------------------------
@@ -115,31 +115,38 @@ exports.register = function (req, res) {
         res.redirect('/')                   // ... redirect only when session save() has finished (async)
       })
     })
-} // ENDS User.register()
+} // ENDS register()
+//
 
 //
-// render home page -------------------------------------------------------------------------------
+// render home page if the user is logged in ------------------------------------------------------
 //
-exports.home = function (req, res) {
+exports.home = async function (req, res) {
 
   if (req.session.user) {
-    res.render('home-dashboard')
+
+    // get the feed of posts for current user
+    let posts = await Post.getFeed(req.session.user._id)
+
+    res.render('home-dashboard', {posts: posts}) // send the retrieved posts to the view
   } else {
     res.render('home-guest', { regErrors: req.flash('regErrors') })
   }
-}
+} // ENDS home()
+//
 
 //
 // confirm that there are posts under this name ---------------------------------------------------
 //
 exports.ifUserExists = function (req, res, next) {
+
   User.findByUsername(req.params.username)
     .then(function (userDocument) {
       req.profileUser = userDocument
       next()
     })
     .catch(function () {
-      res.render("404")                     // there are no documents with that author name
+      res.render("404")                                    // there are no documents with that author name
     })
 } // ENDS ifUserExists()
 
@@ -175,11 +182,12 @@ exports.profilePostsScreen = function (req, res) {
 // Get the users that are followers of this user --------------------------------------------------
 //
 exports.profileFollowersScreen = async function (req, res) {
+
   console.log("IN profileFollowersScreen ")
   try {
     // console.log("in try block")                            // debug
     let followers = await Follow.getFollowersById(req.profileUser._id)
-    // console.log("followers=" + followers)                  // debug
+     console.log("x followers=" + JSON.stringify(followers) )                  // debug
     res.render('profile-followers', {
       currentPage: "followers",
       followers: followers,
@@ -195,7 +203,7 @@ exports.profileFollowersScreen = async function (req, res) {
     })
   }
   catch {
-    // console.log("in catch block")                                       // debug
+    // console.log("in catch block")                                           // debug
     res.render('404')
   }
 } // profileFollowersScreen()
@@ -209,11 +217,8 @@ exports.profileFollowingScreen = async function (req, res) {
 
   try {
     // console.log("in try block")                                             // debug
-
     let following = await Follow.getFollowingById(req.profileUser._id)
-
-    console.log("--- following=" + following)                                  // debug
-
+    // console.log("--- following=" + JSON.stringify(following))               // debug
     res.render('profile-following', {
       currentPage: "following",
       following: following,
@@ -229,11 +234,11 @@ exports.profileFollowingScreen = async function (req, res) {
     })
   }
   catch {
-    // console.log("in catch block")                                       // debug
+    // console.log("in catch block")                                           // debug
     res.render('404')
   }
 } // profileFollowingScreen()
-
+//
 
 
 
