@@ -74,11 +74,11 @@ Post.prototype.create = function () {
 Post.prototype.update = function () {
   return new Promise(async (resolve, reject) => {
     try {
-      // console.log("at 1 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
+      // console.log("at 1 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug +++ - check IDs
 
       let post = await Post.findSingleById(this.requestedPostId, this.userid)
 
-      // console.log("at 2 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug - check IDs
+      // console.log("at 2 - postID = " + this.requestedPostId + ". userid = " + this.userid) // debug +++ - check IDs
 
       if (post.isVisitorOwner) {
         // actually update the DB
@@ -124,13 +124,13 @@ Post.prototype.actuallyUpdate = function () {
 //
 Post.findSingleById = function (id, visitorId) {
 
-  console.log("in findSingleById top. id = " + id + ". visitorId = " + visitorId) // debug
+  console.log("in findSingleById top. id = " + id + ". visitorId = " + visitorId) // debug +++
 
   return new Promise(async function (resolve, reject) {
 
     if (typeof (id) != "string" || !ObjectID.isValid(id)) { // is id a string and is it a Mongo ObjectID ?
 
-      console.log("in findSingleById failed id test.")      // debug
+      console.log("in findSingleById failed id test.")      // debug +++
 
       reject()                                              // fail
       return                                                // no further processing
@@ -138,7 +138,7 @@ Post.findSingleById = function (id, visitorId) {
     // The following code works because we know that each post only has a single author, and so
     //  the $lookup (join) will only return a single document in authorDocument[0] array position.
 
-    console.log("in findSingleById before call reusablePostQuery.") // debug
+    console.log("in findSingleById before call reusablePostQuery.") // debug +++
 
     let posts = await Post.reusablePostQuery([              // look for a single post
       {
@@ -148,7 +148,7 @@ Post.findSingleById = function (id, visitorId) {
 
     if (posts.length) {                                     // if lenght != 0, ie: something was returned
 
-      console.log(posts[0]) // debug - send out the post id
+      console.log(posts[0]) // debug +++ - send out the post id
 
       resolve(posts[0])                                     // return the object 
     } else {

@@ -35,7 +35,7 @@ exports.viewSingle = async function (req, res) {
 
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId)
-    res.render('single-post-screen', { post: post })
+    res.render('single-post-screen', { post: post, title: post.title })
   }
   catch {
     res.render('404')
@@ -68,7 +68,7 @@ exports.viewEditScreen = async function (req, res) {
 // exports.viewEditScreen = async function (req, res) {
 //   try {
 //     let post = await Post.findSingleById(req.params.id, req.visitorId)
-//     console.log("post.authorId=" + post.authorId + " req.visitorId=" + req.visitorId) // debug
+//     console.log("post.authorId=" + post.authorId + " req.visitorId=" + req.visitorId) // debug +++
 //     if (post.authorId == req.visitorId) {
 //       res.render("edit-post", { post: post })
 //     } else {

@@ -275,8 +275,7 @@ textarea.tall-textarea {
   right: 20px;
   width: 290px;
   height: 350px;
-  // background-color: #FFF;
-  background-color: palegoldenrod;
+  background-color: #FFF;
   display: flex;
   flex-direction: column;
   transition: all .4s ease-in-out;

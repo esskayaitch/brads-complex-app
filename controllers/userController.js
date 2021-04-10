@@ -12,8 +12,8 @@ exports.sharedProfileData = async function (req, res, next) {
   let isVisitorsProfile = false
   let isFollowing = false
 
-  console.log("sharedProfileData req.profileUser._id=" + req.profileUser._id)     // debug - ok
-  console.log("sharedProfileData req.VisitorId=" + req.visitorId)                 // debug - 
+  console.log("sharedProfileData req.profileUser._id=" + req.profileUser._id)     // debug +++ - ok
+  console.log("sharedProfileData req.VisitorId=" + req.visitorId)                 // debug +++ - 
 
   if (req.session.user) {
 
@@ -158,6 +158,7 @@ exports.profilePostsScreen = function (req, res) {
   Post.findByAuthorId(req.profileUser._id)
     .then(function (posts) {
       res.render('profile', {
+        title: `Profile for ${req.profileUser.username}`,
         currentPage: "posts",
         posts: posts,
         profileUsername: req.profileUser.username,
@@ -185,9 +186,9 @@ exports.profileFollowersScreen = async function (req, res) {
 
   console.log("IN profileFollowersScreen ")
   try {
-    // console.log("in try block")                            // debug
+    // console.log("in try block")                            // debug +++
     let followers = await Follow.getFollowersById(req.profileUser._id)
-     console.log("x followers=" + JSON.stringify(followers) )                  // debug
+     console.log("x followers=" + JSON.stringify(followers) )                  // debug +++
     res.render('profile-followers', {
       currentPage: "followers",
       followers: followers,
@@ -203,7 +204,7 @@ exports.profileFollowersScreen = async function (req, res) {
     })
   }
   catch {
-    // console.log("in catch block")                                           // debug
+    // console.log("in catch block")                                           // debug +++
     res.render('404')
   }
 } // profileFollowersScreen()
@@ -213,12 +214,12 @@ exports.profileFollowersScreen = async function (req, res) {
 //
 exports.profileFollowingScreen = async function (req, res) {
 
-  console.log(" === IN profileFollowingScreen, req.profileUser._id=" + req.profileUser._id) // debug
+  console.log(" === IN profileFollowingScreen, req.profileUser._id=" + req.profileUser._id) // debug +++
 
   try {
-    // console.log("in try block")                                             // debug
+    // console.log("in try block")                                             // debug +++
     let following = await Follow.getFollowingById(req.profileUser._id)
-    // console.log("--- following=" + JSON.stringify(following))               // debug
+    // console.log("--- following=" + JSON.stringify(following))               // debug +++
     res.render('profile-following', {
       currentPage: "following",
       following: following,
@@ -234,7 +235,7 @@ exports.profileFollowingScreen = async function (req, res) {
     })
   }
   catch {
-    // console.log("in catch block")                                           // debug
+    // console.log("in catch block")                                           // debug +++
     res.render('404')
   }
 } // profileFollowingScreen()

@@ -38,7 +38,7 @@ Follow.prototype.validate = async function (action) {
     followedId: this.followedId, authorId: new ObjectID(this.authorId)
   })
 
-  console.log("Action=" + action)                                              // debug
+  console.log("Action=" + action)                                              // debug +++
 
   // already following - cannot happen!!! The "follow" button should not have appeared on the screen.
   if (action == "create") {
@@ -94,8 +94,8 @@ Follow.prototype.delete = function () {
 //
 Follow.isVisitorFollowing = async function (followedId, visitorId) {
 
-  console.log("followedId=" + followedId)                               // debug
-  console.log("visitorId=" + visitorId)                                 // debug
+  console.log("followedId=" + followedId)                               // debug +++
+  console.log("visitorId=" + visitorId)                                 // debug +++
 
   let followDoc = await followsCollection.findOne(
     {
@@ -115,7 +115,7 @@ Follow.isVisitorFollowing = async function (followedId, visitorId) {
 // Get the users who are following this user ------------------------------------------------------
 //
 Follow.getFollowersById = function (id) {
-  // console.log("in getFollowersById, followed ID =" + id)                     // debug
+  // console.log("in getFollowersById, followed ID =" + id)                     // debug +++
   return new Promise(async (resolve, reject) => {
     try {
       let followers = await followsCollection.aggregate([
@@ -146,7 +146,7 @@ Follow.getFollowersById = function (id) {
 //
 Follow.getFollowingById = function (id) {
 
-  console.log("+++ in getFollowingById, id=" + id)                             // debug
+  console.log("+++ in getFollowingById, id=" + id)                             // debug +++
 
   return new Promise(async (resolve, reject) => {
     try {
@@ -161,8 +161,8 @@ Follow.getFollowingById = function (id) {
         }
       ]).toArray()
 
-      console.log("-=-= following=" + followers)                                    // debug
-      // console.log("-+-+ userDoc=" + userDoc)                                        // debug
+      console.log("-=-= following=" + followers)                               // debug +++
+      // console.log("-+-+ userDoc=" + userDoc)                                // debug +++
 
       followers = followers.map(function (follower) {
         let user = new User(follower, true)

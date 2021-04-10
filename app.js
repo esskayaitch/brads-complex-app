@@ -20,11 +20,11 @@ let sessionOptions = session({
   cookie: {
     maxAge: 1000 * 60 * 60 * 24,
     httpOnly: true
-  }                                         // 24 hours in milliseconds
+  }                                                           // 24 hours in milliseconds
 })
 
-app.use(sessionOptions)                     // start session
-app.use(flash())                            // load flash
+app.use(sessionOptions)                                       // start session
+app.use(flash())                                              // load flash
 
 app.use(function (req, res, next) {
 
@@ -50,17 +50,49 @@ app.use(function (req, res, next) {
   next()
 })
 
-const router = require('./router')          // run this js file now
+const router = require('./router')                            // run this js file now
 
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
 app.use(express.static('public'))
-app.set('views', 'views')                   // where views are stored
-app.set('view engine', 'ejs')               // name of view engine
+app.set('views', 'views')                                     // where views are stored
+app.set('view engine', 'ejs')                                 // name of view engine
+app.use('/', router)                                          // use router.js when the root directory is a get request
 
-app.use('/', router)
+// socket stuff -----------------------------------------------------------------------------------
 
-module.exports = app
+const server = require('http').createServer(app)              // needed to use socket.io
+const io = require('socket.io')(server)                       // link socket layer to the server we just created - ??? research skh
+
+io.use(function (socket, next) {
+  sessionOptions(socket.request, socket.request.res, next)     // makes express session data available to socket.io
+})
+
+io.on('connection', function (socket) {
+
+  if (socket.request.session.user) {
+    let user = socket.request.session.user                      // get the user info
+
+    socket.emit('Welcome', { username: user.username, avatar: user.avatar })
+
+    socket.on('chatMessageFromBrowser', function (data) {
+      // console.log(data.message)                              // debug +++ 
+      socket.broadcast.emit('chatMessageFromServer', {          // send to everyone except me
+        // message: data.message,                               // THIS HAS NO SECURITY - DANGER
+        message: sanitizeHTML(data.message, {
+          allowedTags: [],
+          allowedAttributes: {}
+        }), // no tags, no attributes
+        username: user.username,
+        avatar: user.avatar
+      }) // send message to all users with chat window open
+    })
+
+  }
+
+}) // ENDS io.on()
+
+module.exports = server
 
 // ENDS app.js
