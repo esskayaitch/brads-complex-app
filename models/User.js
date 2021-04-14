@@ -8,7 +8,7 @@ const md5 = require("md5")
 //
 let User = function (data, getAvatar) {
   this.data = data                                         // data comes in as first param
-  this.errors = []        
+  this.errors = []
   if (getAvatar == undefined) { getAvatar = false }        // second param is empty or is avatar url
   if (getAvatar) { this.getAvatar() }
 } // ENDS User constructor
@@ -141,7 +141,7 @@ User.findByUsername = function (username) {
     }
     usersCollection.findOne({ username: username })
       .then(function (userDoc) {
-        if(userDoc) {
+        if (userDoc) {
           userDoc = new User(userDoc, true)
           userDoc = {
             _id: userDoc.data._id,
@@ -149,7 +149,7 @@ User.findByUsername = function (username) {
             avatar: userDoc.avatar
           }
           resolve(userDoc)
-        }else {
+        } else {
           reject()
         }
       })
@@ -159,6 +159,32 @@ User.findByUsername = function (username) {
   })
 } // ENDS User.findByUsername()
 //
+
+
+//
+// look up the user by email ----------------------------------------------------------------------
+//
+User.doesEmailExist = function (email) {
+  return new Promise(async function (resolve, reject) {
+
+    if (typeof (email) != "string") {
+      resolve(false)
+      return
+    }
+
+    let user = await usersCollection.findOne({ email: email })
+    if (user) {
+      resolve(true)
+    } else {
+      resolve(false)
+    }
+
+  })
+  //
+} // ENDS doesEmailExist()
+//
+
+
 
 
 module.exports = User

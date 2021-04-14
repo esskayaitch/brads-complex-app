@@ -8,6 +8,8 @@ export default class Search {
   constructor() {
 
     // Select DOM elements and store in variables  
+    this._csrf = document.querySelector('[name="_csrf"]').value
+
     this.injectHTML()
     this.headerSearchIcon = document.querySelector(".header-search-icon")
     this.closeIcon = document.querySelector(".close-live-search")
@@ -72,7 +74,7 @@ export default class Search {
   //
   sendRequest() {
 
-    axios.post('/search', { searchTerm: this.inputField.value })
+    axios.post('/search', { _csrf: this._csrf, searchTerm: this.inputField.value })
 
       .then((response) => {
         console.log(response.data)

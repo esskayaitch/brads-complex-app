@@ -4,8 +4,7 @@ const MongoStore = require('connect-mongo')(session)
 const flash = require('connect-flash')
 const markdown = require('marked')
 const sanitizeHTML = require('sanitize-html')
-
-
+const csrf = require('csurf')
 const app = express()
 
 let sessionOptions = session({
@@ -50,6 +49,7 @@ app.use(function (req, res, next) {
   next()
 })
 
+
 const router = require('./router')                            // run this js file now
 
 app.use(express.urlencoded({ extended: false }))
@@ -58,7 +58,29 @@ app.use(express.json())
 app.use(express.static('public'))
 app.set('views', 'views')                                     // where views are stored
 app.set('view engine', 'ejs')                                 // name of view engine
+
+app.use(csrf())                                               // setup csrf
+app.use(function (req, res, next) {
+  res.locals.csrfToken = req.csrfToken()
+  next()
+})
+
 app.use('/', router)                                          // use router.js when the root directory is a get request
+
+app.use(function (err, req, res, next) {
+
+  if (err) {
+    if (err.code == "EBADCSRFTOKEN") {
+      req.flash('errors', "Cross Site Request Forgery detected!")
+      req.session.save(() => res.redirect('/'))
+    } else {
+      res.render("404")
+    }
+  }
+
+})
+
+
 
 // socket stuff -----------------------------------------------------------------------------------
 

@@ -4,6 +4,32 @@ const Post = require('../models/Post')
 const Follow = require('../models/Follow')
 
 
+
+//
+// Check Mongo to see if the username being registered is already taken ---------------------------
+//
+exports.doesUsernameExist = function (req, res) {
+  User.findByUsername(req.body.username)
+    .then(function () {
+      res.json(true)                                       // Mongo says user found
+    })
+    .catch(function () {
+      res.json(false)                                      // Mongo says user not found
+    })
+  //
+} // ENDS doesUsernameExist()
+//
+//
+
+// Check Mongo to see if the email being registered is already taken ------------------------------
+//
+exports.doesEmailExist = async function (req, res) {
+  let emailBool = await User.doesEmailExist(req.body.email)
+  res.json(emailBool)                                      // Mongo says email true/false
+  //
+} // ENDS doesEmailExist()
+//
+
 //
 // check the user is logged in and following the current profile ----------------------------------
 //
@@ -128,7 +154,7 @@ exports.home = async function (req, res) {
     // get the feed of posts for current user
     let posts = await Post.getFeed(req.session.user._id)
 
-    res.render('home-dashboard', {posts: posts}) // send the retrieved posts to the view
+    res.render('home-dashboard', { posts: posts }) // send the retrieved posts to the view
   } else {
     res.render('home-guest', { regErrors: req.flash('regErrors') })
   }
@@ -188,7 +214,7 @@ exports.profileFollowersScreen = async function (req, res) {
   try {
     // console.log("in try block")                            // debug +++
     let followers = await Follow.getFollowersById(req.profileUser._id)
-     console.log("x followers=" + JSON.stringify(followers) )                  // debug +++
+    console.log("x followers=" + JSON.stringify(followers))                  // debug +++
     res.render('profile-followers', {
       currentPage: "followers",
       followers: followers,
