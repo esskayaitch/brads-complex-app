@@ -5,8 +5,8 @@ const Post = require('../models/Post')
 //
 exports.viewCreateScreen = function (req, res) {
   res.render('create-post')
-}
-
+} // ENDS viewCreateScreen()
+//
 
 //
 // POST request to /create-post comes here --------------------------------------------------------
@@ -26,7 +26,29 @@ exports.create = function (req, res) {
         req.session.save(() => res.redirect("create-post"))
       }
     )
-}
+} // ENDS create()
+//
+
+//
+// API POST request to /create-post comes here ----------------------------------------------------
+//
+exports.apiCreate = function (req, res) {
+
+  let post = new Post(req.body, req.apiUser._id) 
+  post.create()
+
+    .then(
+      function (newId) {
+        res.json("Post created.")
+      }
+    )
+    .catch(
+      function (errors) {
+        res.json(errors)
+      }
+    )
+} // ENDS apiCreate()
+//
 
 //
 // GET request to /post/:id come here ---------------------------------------------------------
@@ -137,7 +159,24 @@ exports.delete = function (req, res) {
       req.session.save(() => res.redirect("/"))
 
     })
-}
+} //
+//
+
+//
+// POST request to /post/:id/delete ----------------------------------------------------------------
+//
+exports.apiDelete = function (req, res) {
+
+  Post.delete(req.params.id, req.apiUser._id)
+
+    .then(() => {
+      res.json("Successful delete.")
+    })
+    .catch(() => {
+      res.json("You do not have permission to do that.")
+    })
+} // ENDS apiDelete
+//
 
 exports.search = function (req, res) {
 

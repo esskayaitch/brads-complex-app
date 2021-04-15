@@ -7,6 +7,11 @@ const sanitizeHTML = require('sanitize-html')
 const csrf = require('csurf')
 const app = express()
 
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
+app.use('/api', require('./router-api'))
+
 let sessionOptions = session({
   secret: "Randon stuff mumble mumble mumble ",
   store: new MongoStore(
@@ -26,7 +31,6 @@ app.use(sessionOptions)                                       // start session
 app.use(flash())                                              // load flash
 
 app.use(function (req, res, next) {
-
 
   // make our markdown fnuction available from within our ejs templates
   res.locals.filterUserHTML = function (content) {
@@ -51,9 +55,6 @@ app.use(function (req, res, next) {
 
 
 const router = require('./router')                            // run this js file now
-
-app.use(express.urlencoded({ extended: false }))
-app.use(express.json())
 
 app.use(express.static('public'))
 app.set('views', 'views')                                     // where views are stored
